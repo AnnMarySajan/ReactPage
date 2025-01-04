@@ -1,0 +1,24 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: react-app-deployment
+  labels:
+    app: react-app
+spec:
+  replicas: 2  # Number of pods to run
+  selector:
+    matchLabels:
+      app: react-app
+  template:
+    metadata:
+      labels:
+        app: react-app
+    spec:
+      containers:
+      - name: react-container
+        image: annsvalorem/react-my-hello-world:0.0.4 # Replace with your Docker Hub image
+        ports:
+        - containerPort: 3000
+        env:
+        - name: NODE_ENV
+          value: production
