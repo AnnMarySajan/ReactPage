@@ -12,12 +12,6 @@ pipeline {
     }
 
     stages {
-        stage('Clone Repository') {
-            steps {
-                // Checkout the repository with the Dockerfile and YAML files
-                git url: 'https://github.com/annmselizabeth/ReactPage.git' // Replace with your repo details
-            }
-        }
 
         stage('Build Docker Image') {
             steps {
@@ -32,10 +26,10 @@ pipeline {
 
         stage('Push Docker Image to Docker Hub') {
             steps {
-                withCredentials([string(credentialsId: 'docker-hub-token', variable: 'DOCKER_HUB_TOKEN')]) {
+                 withCredentials([usernamePassword(credentialsId: 'dockerhub-cred', usernameVariable: 'USERNAME', passwordVariable: 'PASSWORD')])  {
                     script {
                         sh """
-                        echo ${DOCKER_HUB_TOKEN} | docker login -u your-dockerhub-username --password-stdin
+                        echo ${PASSWORD} | docker login -u ${USERNAME} --password-stdin
                         docker push ${DOCKER_HUB_REPO}:${env.BUILD_NUMBER}
                         docker push ${DOCKER_HUB_REPO}:latest
                         """
