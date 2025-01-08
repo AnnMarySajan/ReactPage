@@ -13,11 +13,16 @@ pipeline {
 
     stages {
 
-        stage('Install sudo') {
-            steps {
-                script {
+       stage('Install sudo') {
+    steps {
+            script {
                     sh """
                     echo "Checking if sudo is installed..."
+                    if [ "$(id -u)" -ne 0 ]; then
+                        echo "This step requires root privileges. Please run as root or use a root-enabled Jenkins agent."
+                        exit 1
+                    fi
+
                     if ! command -v sudo &> /dev/null; then
                         echo "sudo not found, installing it..."
                         apt-get update && apt-get install -y sudo
@@ -28,6 +33,7 @@ pipeline {
                 }
             }
         }
+
 
         stage('Install kubectl and Azure CLI') {
             steps {
