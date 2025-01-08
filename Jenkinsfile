@@ -74,4 +74,60 @@ pipeline {
             steps {
                 script {
                     sh """
-                 
+                    sudo az aks get-credentials --resource-group ${RESOURCE_GROUP} --name ${AKS_CLUSTER}
+                    kubectl get nodes
+                    """
+                }
+            }
+        }
+
+        stage('Deploy to AKS') {
+            steps {
+                script {
+                    sh """
+                    kubectl apply -f ${DEPLOYMENT_FILE}
+                    kubectl apply -f ${SERVICE_FILE}
+                    kubectl apply -f ${INGRESS_FILE}
+                    """
+                }
+            }
+        }
+
+        stage('Verify Deployment') {
+            steps {
+                script {
+                    sh """
+                    kubectl get pods
+                    kubectl get svc
+                    kubectl get ingress
+                    """
+                }
+            }
+        }
+
+        stage('Clean up CLI tools') {
+            steps {
+                script {
+                    sh """
+                    echo "Cleaning up Azure CLI and kubectl..."
+                    sudo apt-get remove --purge -y azure-cli
+                    sudo apt-get remove --purge -y kubectl
+                    sudo apt-get autoremove -y
+                    """
+                }
+            }
+        }
+    }
+
+    post {
+        always {
+            echo 'Pipeline execution completed.'
+        }
+        success {
+            echo 'Deployment successful!'
+        }
+        failure {
+            echo 'Pipeline failed. Please check the logs.'
+        }
+    }
+}
