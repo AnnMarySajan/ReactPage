@@ -12,6 +12,45 @@ pipeline {
     }
 
     stages {
+
+       stage('Install sudo') {
+    steps {
+            script {
+                    sh """
+                    echo "Checking if sudo is installed..."
+                    if [ "$(id -u)" -ne 0 ]; then
+                        echo "This step requires root privileges. Please run as root or use a root-enabled Jenkins agent."
+                        exit 1
+                    fi
+
+                    if ! command -v sudo &> /dev/null; then
+                        echo "sudo not found, installing it..."
+                        apt-get update && apt-get install -y sudo
+                    else
+                        echo "sudo is already installed."
+                    fi
+                    """
+                }
+            }
+        }
+
+
+        stage('Install kubectl and Azure CLI') {
+            steps {
+                script {
+                    sh """
+                    echo "Installing Azure CLI..."
+                    curl -sL https://aka.ms/InstallAzureCLIDeb | sudo bash
+
+                    echo "Installing kubectl..."
+                    sudo az aks install-cli
+                    kubectl version --client
+                    az version
+                    """
+                }
+            }
+        }
+
         stage('Build Docker Image') {
             steps {
                 script {
@@ -41,7 +80,7 @@ pipeline {
             steps {
                 script {
                     sh """
-                    az aks get-credentials --resource-group ${RESOURCE_GROUP} --name ${AKS_CLUSTER}
+                    sudo az aks get-credentials --resource-group ${RESOURCE_GROUP} --name ${AKS_CLUSTER}
                     kubectl get nodes
                     """
                 }
@@ -67,6 +106,19 @@ pipeline {
                     kubectl get pods
                     kubectl get svc
                     kubectl get ingress
+                    """
+                }
+            }
+        }
+
+        stage('Clean up CLI tools') {
+            steps {
+                script {
+                    sh """
+                    echo "Cleaning up Azure CLI and kubectl..."
+                    sudo apt-get remove --purge -y azure-cli
+                    sudo apt-get remove --purge -y kubectl
+                    sudo apt-get autoremove -y
                     """
                 }
             }
