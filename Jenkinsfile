@@ -18,7 +18,7 @@ pipeline {
                 script {
                     sh """
                     echo "Installing Azure CLI..."
-                    curl -sL https://aka.ms/InstallAzureCLIDeb | sudo bash
+                    curl -sL https://aka.ms/InstallAzureCLIDeb | bash
 
                     echo "Installing kubectl..."
                     az aks install-cli
@@ -94,9 +94,9 @@ pipeline {
                 script {
                     sh """
                     echo "Cleaning up Azure CLI and kubectl..."
-                    sudo apt-get remove --purge -y azure-cli
-                    sudo apt-get remove --purge -y kubectl
-                    sudo apt-get autoremove -y
+                    apt-get remove --purge -y azure-cli
+                    apt-get remove --purge -y kubectl
+                    apt-get autoremove -y
                     """
                 }
             }
