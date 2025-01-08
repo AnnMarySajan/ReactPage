@@ -13,15 +13,31 @@ pipeline {
 
     stages {
 
+        stage('Install sudo') {
+            steps {
+                script {
+                    sh """
+                    echo "Checking if sudo is installed..."
+                    if ! command -v sudo &> /dev/null; then
+                        echo "sudo not found, installing it..."
+                        apt-get update && apt-get install -y sudo
+                    else
+                        echo "sudo is already installed."
+                    fi
+                    """
+                }
+            }
+        }
+
         stage('Install kubectl and Azure CLI') {
             steps {
                 script {
                     sh """
                     echo "Installing Azure CLI..."
-                    curl -sL https://aka.ms/InstallAzureCLIDeb | bash
+                    curl -sL https://aka.ms/InstallAzureCLIDeb | sudo bash
 
                     echo "Installing kubectl..."
-                    az aks install-cli
+                    sudo az aks install-cli
                     kubectl version --client
                     az version
                     """
@@ -58,60 +74,4 @@ pipeline {
             steps {
                 script {
                     sh """
-                    az aks get-credentials --resource-group ${RESOURCE_GROUP} --name ${AKS_CLUSTER}
-                    kubectl get nodes
-                    """
-                }
-            }
-        }
-
-        stage('Deploy to AKS') {
-            steps {
-                script {
-                    sh """
-                    kubectl apply -f ${DEPLOYMENT_FILE}
-                    kubectl apply -f ${SERVICE_FILE}
-                    kubectl apply -f ${INGRESS_FILE}
-                    """
-                }
-            }
-        }
-
-        stage('Verify Deployment') {
-            steps {
-                script {
-                    sh """
-                    kubectl get pods
-                    kubectl get svc
-                    kubectl get ingress
-                    """
-                }
-            }
-        }
-
-        stage('Clean up CLI tools') {
-            steps {
-                script {
-                    sh """
-                    echo "Cleaning up Azure CLI and kubectl..."
-                    apt-get remove --purge -y azure-cli
-                    apt-get remove --purge -y kubectl
-                    apt-get autoremove -y
-                    """
-                }
-            }
-        }
-    }
-
-    post {
-        always {
-            echo 'Pipeline execution completed.'
-        }
-        success {
-            echo 'Deployment successful!'
-        }
-        failure {
-            echo 'Pipeline failed. Please check the logs.'
-        }
-    }
-}
+                 
